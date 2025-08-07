@@ -4,7 +4,7 @@ The `spiro_features_extraction` class provides a modular architecture for extrac
 
 * Area under the Flow-Volume Loop (% predicted)
 * Angle of Collapse (AC)
-* Deflating Balloon Model (ongoing development)
+* Deflating Balloon Model (ODE-based dynamic simulation)
 
 All modules assume the FE signal is standardized and oriented such that:
 
@@ -74,71 +74,28 @@ ac = spiro_features_extraction.angle_of_collapse(FE_volume, FE_flow)
 
 ### Subclass: `deflating_baloon`
 
-Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon.
-
-#### Initialization
-
-```python
-db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
-```
-
-#### Core Methods
+Models the FE signal using a second-order ODE dynamics, simulating the lungs as a deflating balloon. Supports:
 
 * `orient_and_snip_signal()`
-
-  * Prepares volume/flow signals for modeling by standardizing orientation
-
 * `reorient_model()`
-
-  * Reverts simulated signal to original coordinate system
-
 * `get_excitation_phase(T1, params)`
-
-  * Models early phase of expiration (excitation) based on dynamic type
-
 * `calc_hypothesis(params)`
-
-  * Simulates the flow-volume signal using the selected model and parameters
-
 * `Cost_Function(params)`
-
-  * Computes error between predicted and actual volume/flow to be minimized
-
 * `run_model(excitation_type, plot_model=False, ...)`
-
-  * Fits model using `differential_evolution` optimizer and plots results
-
-* `run_simulation(...)`
-
-  * Runs sensitivity analysis by varying one model parameter
-
+* `run_simulation(sim_param, sim_type, ...)`
 * `calc_FEV1_FVC()`
-
-  * Computes interpolated FEV1 and final FVC from model output
-
 * `plot_model(only_FVL, add_title_text)`
 
-  * Plots comparison between actual and simulated flow/volume signals
+These methods enable parameter optimization via `scipy.optimize.differential_evolution` and visualization of model fits, including sensitivity analyses (MSE, R² metrics).
 
 ---
 
 ## Excitation Types
 
-* `Linear`: (Deprecated)
-* `Exponential pressure`: (Deprecated)
-* `Non linear`: Nonlinear ramping of PEF
-* `Default`: Constant initial condition
-
-Each model type influences the cost function structure and parameter interpretation.
-
----
-
-## Optimization Notes
-
-All modeling is done via `scipy.optimize.differential_evolution`. Fit metrics include:
-
-* Mean Squared Error (MSE)
-* R² Score (flow and volume)
+* `Linear` (deprecated)
+* `Exponential pressure` (deprecated)
+* `Non linear` (nonlinear PEF ramp-up)
+* `Default` (constant initial conditions)
 
 ---
 
@@ -168,6 +125,8 @@ db.run_model(excitation_type="Non linear", plot_model=True)
 * `scipy.optimize.differential_evolution`
 * `sklearn.metrics`
 * `utilities` (custom plotting utility used inside `angle_of_collapse`)
+
+Ensure these libraries are installed before using this class.
 
 ---
 
