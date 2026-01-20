@@ -76,6 +76,8 @@ ac = spiro_features_extraction.angle_of_collapse(FE_volume, FE_flow)
 
 Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon.
 
+> Note: the class name in code is spelled `deflating_baloon` (single "o" in "baloon"). This matches the implementation and should be used when instantiating the class.
+
 #### Initialization
 
 ```python
@@ -166,8 +168,18 @@ db.run_model(excitation_type="Non linear", plot_model=True)
 * `numpy`
 * `matplotlib.pyplot`
 * `scipy.optimize.differential_evolution`
-* `sklearn.metrics`
+* `sklearn.metrics` (used to compute MSE and R² inside `run_model`)
 * `utilities` (custom plotting utility used inside `angle_of_collapse`)
+
+---
+
+## Known issues / Implementation notes (from code)
+
+1. Several excitation types are marked as discarded or deprecated in the code. Prefer using the `Non linear` or default fitting options for stable behavior.
+
+2. The run_model implementation contains a typographical mistake in the condition that checks excitation types when computing fit metrics. The string used in the list does not match the literal "Exponential pressure"; as a result, the code path that computes MSE/R² for that specific excitation type may not be selected as intended. The code still imports `sklearn.metrics` and computes metrics, but behavior might not match expectations for the "Exponential pressure" branch. If you rely on that branch, inspect the implementation or adjust the source.
+
+3. The deflating balloon module performs non-linear optimization and may be sensitive to initial conditions and bounds. Expect longer runtimes for differential evolution on large signals.
 
 ---
 

@@ -143,12 +143,27 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 ---
 
+## Known issues / Implementation notes (from code)
+
+1. __init__ references a global variable `scale` when setting time (self.time = np.array(time) * scale). In the current code `scale` is not defined inside the module. Instantiating `spiro_signal_process` as-is will raise a NameError unless `scale` is defined in the execution environment. Workaround: define a numeric variable named `scale` in the caller's namespace before creating the object (e.g. `scale = 1`) or modify the source to remove/make `scale` optional.
+
+2. `standerdize_units()` divides volume, flow and time by 1000. This means the method expects the inputs to be in millilitres (mL) and milliseconds (ms) if you plan to convert to litres and seconds by calling this method. This is inconsistent with the constructor docstring that recommends inputs "preferably in s" and "preferably in litres". Practically:
+   - If your input `volume` is in mL and `flow` in mL/s and `time` in ms, calling `standerdize_units()` will convert them to L, L/s and s (by dividing by 1000).
+   - If your inputs are already in L and s, do NOT call `standerdize_units()` (or else values will be divided incorrectly).
+
+3. The codebase contains several small spelling inconsistencies (for example `standerdize_units` is misspelled). These do not change behavior but are kept for backward compatibility.
+
+4. Some helper functions (e.g., peak detection using `peakutils`) require that `peakutils` is installed and may fail silently or raise errors if data are degenerate.
+
+---
+
 ## Example Workflow
 
 ```python
 sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False)
+# If your data are in mL and ms and you want L and s, call:
+# sp.standerdize_units()
 sp.correct_data_positioning()
-sp.standerdize_units()
 accepted, reason = sp.check_acceptability_of_spirogram()
 if accepted:
     sp.finalize_signal(sex=1, age=35, height=175)
