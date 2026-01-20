@@ -4,7 +4,7 @@ The `spiro_features_extraction` class provides a modular architecture for extrac
 
 * Area under the Flow-Volume Loop (% predicted)
 * Angle of Collapse (AC)
-* Deflating Balloon Model (ongoing development)
+* Deflating Balloon model (implemented)
 
 All modules assume the FE signal is standardized and oriented such that:
 
@@ -74,7 +74,7 @@ ac = spiro_features_extraction.angle_of_collapse(FE_volume, FE_flow)
 
 ### Subclass: `deflating_baloon`
 
-Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon.
+Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon. This model is implemented in the library (not just planned).
 
 #### Initialization
 
@@ -106,7 +106,7 @@ db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
 
 * `run_model(excitation_type, plot_model=False, ...)`
 
-  * Fits model using `differential_evolution` optimizer and plots results
+  * Fits model using `differential_evolution` optimizer and stores model outputs and fit metrics
 
 * `run_simulation(...)`
 
@@ -124,8 +124,8 @@ db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
 
 ## Excitation Types
 
-* `Linear`: (Deprecated)
-* `Exponential pressure`: (Deprecated)
+* `Linear`: (Deprecated / legacy)
+* `Exponential pressure`: (Deprecated / legacy)
 * `Non linear`: Nonlinear ramping of PEF
 * `Default`: Constant initial condition
 
@@ -166,7 +166,7 @@ db.run_model(excitation_type="Non linear", plot_model=True)
 * `numpy`
 * `matplotlib.pyplot`
 * `scipy.optimize.differential_evolution`
-* `sklearn.metrics`
+* `sklearn.metrics` (used for MSE and R² calculations)
 * `utilities` (custom plotting utility used inside `angle_of_collapse`)
 
 ---
