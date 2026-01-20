@@ -4,7 +4,7 @@ The `spiro_features_extraction` class provides a modular architecture for extrac
 
 * Area under the Flow-Volume Loop (% predicted)
 * Angle of Collapse (AC)
-* Deflating Balloon Model (ongoing development)
+* Deflating balloon model (implemented as class `deflating_baloon`) — under active development
 
 All modules assume the FE signal is standardized and oriented such that:
 
@@ -74,7 +74,7 @@ ac = spiro_features_extraction.angle_of_collapse(FE_volume, FE_flow)
 
 ### Subclass: `deflating_baloon`
 
-Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon.
+Models the FE signal using second-order ODE dynamics. Note: the class name in the code is spelled `deflating_baloon` (single "l" in "baloon"); this documentation reflects that exact identifier. This module is under active development and supports a number of excitation modes.
 
 #### Initialization
 
@@ -106,7 +106,9 @@ db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
 
 * `run_model(excitation_type, plot_model=False, ...)`
 
-  * Fits model using `differential_evolution` optimizer and plots results
+  * Fits model using `scipy.optimize.differential_evolution` optimizer and plots results
+
+  * IMPORTANT: current implementation performs an inline import of sklearn metrics and contains a malformed conditional string near that import. Calling `run_model(...)` in the shipped code may raise a runtime error (import or syntax error). Avoid calling `run_model` in production until the implementation is fixed in source; it is safe to use the other non-optimisation helpers (areaFE, angle_of_collapse) in the meantime.
 
 * `run_simulation(...)`
 
@@ -124,8 +126,8 @@ db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
 
 ## Excitation Types
 
-* `Linear`: (Deprecated)
-* `Exponential pressure`: (Deprecated)
+* `Linear`: (Discarded / deprecated in code comments)
+* `Exponential pressure`: (Discarded / deprecated in code comments)
 * `Non linear`: Nonlinear ramping of PEF
 * `Default`: Constant initial condition
 
@@ -135,10 +137,7 @@ Each model type influences the cost function structure and parameter interpretat
 
 ## Optimization Notes
 
-All modeling is done via `scipy.optimize.differential_evolution`. Fit metrics include:
-
-* Mean Squared Error (MSE)
-* R² Score (flow and volume)
+All modeling optimizations are implemented using `scipy.optimize.differential_evolution`. Fit metrics (MSE and R²) are computed in the code using `sklearn.metrics.mean_squared_error` and `sklearn.metrics.r2_score` where available, but see the warning above about the inline import in `run_model`.
 
 ---
 
@@ -155,8 +154,9 @@ area_pred = af.calc_AreaPred()
 area_actual = af.calc_areaFE()
 
 # Fit balloon model
-db = spiro_features_extraction.deflating_baloon(time, volume, flow)
-db.run_model(excitation_type="Non linear", plot_model=True)
+# WARNING: `run_model` may raise an error in the current source; avoid calling until fixed.
+# db = spiro_features_extraction.deflating_baloon(time, volume, flow)
+# db.run_model(excitation_type="Non linear", plot_model=True)
 ```
 
 ---
@@ -166,7 +166,7 @@ db.run_model(excitation_type="Non linear", plot_model=True)
 * `numpy`
 * `matplotlib.pyplot`
 * `scipy.optimize.differential_evolution`
-* `sklearn.metrics`
+* `sklearn.metrics` (used for fit metrics; see note regarding `run_model` inline import)
 * `utilities` (custom plotting utility used inside `angle_of_collapse`)
 
 ---

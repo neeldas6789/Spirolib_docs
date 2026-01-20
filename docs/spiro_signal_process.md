@@ -5,17 +5,21 @@ The `spiro_signal_process` class provides tools to analyze spirometry data, part
 ## Class Initialization
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE)
+sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE, scale, scale2)
 ```
 
 ### Parameters
 
-* `time`: Time array of the spirometry manoeuvre (list or 1D array, preferably in seconds)
+* `time`: Time array of the spirometry manoeuvre (list or 1D array). Note: the constructor multiplies the provided `time` array by `scale` before storing.
 * `volume`: Volume array of the manoeuvre (list or 1D array, preferably in litres)
 * `flow`: Flow array (list or 1D array, preferably in litres/sec)
 * `patientID`: Unique identifier for the patient
 * `trialID`: Identifier for the trial
 * `flag_given_signal_is_FE`: Boolean flag indicating if the signal is forced expiration only
+* `scale`: Multiplier applied to the provided `time` array on construction (useful when time is provided in ms or other units). Example: if time is in milliseconds, set `scale=0.001` to convert to seconds.
+* `scale2`: Present in the constructor signature but currently unused by the implementation.
+
+Note: `scale` and `scale2` are required positional arguments in the current implementation. If you omit them, Python will raise a TypeError.
 
 ---
 
@@ -136,7 +140,8 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 ## Notes
 
-* It is important to run `correct_data_positioning()` and `standerdize_units()` before performing calculations or acceptability checks
+* It is important to pass `scale` (and the placeholder `scale2`) to the constructor. The implementation multiplies the provided `time` array by `scale` immediately on construction.
+* Run `correct_data_positioning()` and `standerdize_units()` before performing calculations or acceptability checks
 * Plotting methods help visualize raw and processed signals for verification
 * ECCS93 reference computations depend on gender, age, and height
 * All array attributes are assumed to be NumPy arrays internally
@@ -146,7 +151,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 ## Example Workflow
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False)
+sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False, scale=1, scale2=1)
 sp.correct_data_positioning()
 sp.standerdize_units()
 accepted, reason = sp.check_acceptability_of_spirogram()
@@ -154,6 +159,8 @@ if accepted:
     sp.finalize_signal(sex=1, age=35, height=175)
     print(sp.FEV1, sp.FVC, sp.PEF)
 ```
+
+Note: adjust `scale` if your time vector is in milliseconds (use 0.001) or other units.
 
 ---
 
