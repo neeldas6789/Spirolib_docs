@@ -5,7 +5,7 @@ The `spiro_signal_process` class provides tools to analyze spirometry data, part
 ## Class Initialization
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE)
+sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE, scale, scale2)
 ```
 
 ### Parameters
@@ -16,6 +16,9 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 * `patientID`: Unique identifier for the patient
 * `trialID`: Identifier for the trial
 * `flag_given_signal_is_FE`: Boolean flag indicating if the signal is forced expiration only
+* `scale`: Multiplier applied to the input `time` array on initialization (e.g., to convert units). The constructor multiplies the provided time by this `scale`.
+* `scale2`: Additional scale parameter present in the constructor signature. It is accepted by the initializer but is not used elsewhere in the current implementation (kept for API compatibility / future use).
+
 
 ---
 
@@ -73,7 +76,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 * `get_FE_signal(start_type=None, thresh_percent_begin=2, thresh_percent_end=0.25, plot=False)`
 
-  * Returns FE segment (time, volume, flow) and optionally plots it
+  * Returns FE segment (time, volume, flow) and optionally plots it. For `BEV` or `thresh_PEF` `start_type`, the output signals will be padded so flow and volume start/end at zero.
 
 ### Trimming & Thresholding
 
@@ -101,7 +104,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 * `check_acceptability_of_spirogram(min_FE_time=6, thresh_percent_end=0.5)`
 
-  * Evaluates acceptability of the spirometry signal
+  * Evaluates acceptability of the spirometry signal. Can now also reject signals if BEV criteria are not met.
 
 ### Spirometry Parameter Computation
 
@@ -123,7 +126,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 * `finalize_signal(sex=None, age=None, height=None)`
 
-  * Finalizes signal after processing and calculates all flow/volume metrics and predicted values
+  * Finalizes signal after processing and calculates all flow/volume metrics and predicted values. If not already set, `index1` and `index2` (start/end of FE) will be determined during this step.
 
 ### Internal Attributes (Post-finalization)
 
@@ -140,13 +143,14 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 * Plotting methods help visualize raw and processed signals for verification
 * ECCS93 reference computations depend on gender, age, and height
 * All array attributes are assumed to be NumPy arrays internally
+* The constructor will raise an exception if the provided `time`, `volume`, and `flow` arrays are of mismatched lengths.
 
 ---
 
 ## Example Workflow
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False)
+sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False, scale=1, scale2=1)
 sp.correct_data_positioning()
 sp.standerdize_units()
 accepted, reason = sp.check_acceptability_of_spirogram()
@@ -154,6 +158,8 @@ if accepted:
     sp.finalize_signal(sex=1, age=35, height=175)
     print(sp.FEV1, sp.FVC, sp.PEF)
 ```
+
+Note: `scale` is used to multiply the provided `time` on initialization. `scale2` is currently accepted by the initializer but not used elsewhere in the implementation.
 
 ---
 
