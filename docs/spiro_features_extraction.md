@@ -76,6 +76,8 @@ ac = spiro_features_extraction.angle_of_collapse(FE_volume, FE_flow)
 
 Models the FE signal using second-order ODE dynamics. Simulates the lungs as a deflating balloon.
 
+> Note: the code uses the class name `deflating_baloon` (single "o" in "baloon").
+
 #### Initialization
 
 ```python
@@ -104,9 +106,9 @@ db = spiro_features_extraction.deflating_baloon(FE_time, FE_volume, FE_flow)
 
   * Computes error between predicted and actual volume/flow to be minimized
 
-* `run_model(excitation_type, plot_model=False, ...)`
+* `run_model(excitation_type, plot_model=False, add_title_text="", plot_FVL_only=False)`
 
-  * Fits model using `differential_evolution` optimizer and plots results
+  * Fits model using `differential_evolution` optimizer and plots results. Note: additional optional args `add_title_text` (string appended to plot title) and `plot_FVL_only` (if True, only FVL is plotted) are available.
 
 * `run_simulation(...)`
 
@@ -140,6 +142,8 @@ All modeling is done via `scipy.optimize.differential_evolution`. Fit metrics in
 * Mean Squared Error (MSE)
 * R² Score (flow and volume)
 
+The implementation stores fit metrics (e.g., `mse_volume`, `mse_flow`, `R2_volume`, `R2_flow`) as attributes on the object after `run_model`.
+
 ---
 
 ## Example Usage
@@ -156,7 +160,7 @@ area_actual = af.calc_areaFE()
 
 # Fit balloon model
 db = spiro_features_extraction.deflating_baloon(time, volume, flow)
-db.run_model(excitation_type="Non linear", plot_model=True)
+db.run_model(excitation_type="Non linear", plot_model=True, add_title_text="Subject 1", plot_FVL_only=False)
 ```
 
 ---
@@ -166,7 +170,7 @@ db.run_model(excitation_type="Non linear", plot_model=True)
 * `numpy`
 * `matplotlib.pyplot`
 * `scipy.optimize.differential_evolution`
-* `sklearn.metrics`
+* `sklearn.metrics` (used to compute MSE and R² in `run_model`)
 * `utilities` (custom plotting utility used inside `angle_of_collapse`)
 
 ---
