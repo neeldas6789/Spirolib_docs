@@ -1,21 +1,24 @@
-# Documentation: `spiro_signal_process`
-
 The `spiro_signal_process` class provides tools to analyze spirometry data, particularly for handling flow-volume loops (FVLs), forced expiratory manoeuvres (FE), and computing standard spirometry parameters such as FEV1, FVC, and PEF.
 
 ## Class Initialization
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE)
+sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE, scale, scale2, scale3)
 ```
 
 ### Parameters
 
-* `time`: Time array of the spirometry manoeuvre (list or 1D array, preferably in seconds)
-* `volume`: Volume array of the manoeuvre (list or 1D array, preferably in litres)
-* `flow`: Flow array (list or 1D array, preferably in litres/sec)
+* `time`: Time array of the spirometry manoeuvre (list or 1D array). Inputs are typically in milliseconds or seconds depending on acquisition.
+* `volume`: Volume array of the manoeuvre (list or 1D array). Inputs are typically in millilitres or litres depending on acquisition.
+* `flow`: Flow array (list or 1D array). Units depend on acquisition (e.g., ml/s or L/s).
 * `patientID`: Unique identifier for the patient
 * `trialID`: Identifier for the trial
 * `flag_given_signal_is_FE`: Boolean flag indicating if the signal is forced expiration only
+* `scale`: Multiplier applied to the provided `time` array during initialization (numeric). Use `1` if `time` is already in desired units (e.g., seconds).
+* `scale2`: Multiplier applied to the provided `volume` array during initialization (numeric). Use `1` if `volume` is already in desired units (e.g., litres).
+* `scale3`: Present in the constructor signature; not actively applied to `flow` in the current implementation. Pass `1` if no scaling is required.
+
+Note: The constructor applies `self.time = np.array(time) * scale` and `self.volume = np.array(volume) * scale2`. `flow` is set as `np.array(flow)` (no automatic scaling currently), and `scale3` is accepted but not used inside the constructor. To standardize units after construction, use `standerdize_units()` described below.
 
 ---
 
@@ -29,7 +32,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 * `standerdize_units()`
 
-  * Converts all input data units to litres and seconds
+  * Converts all input data units to litres and seconds by dividing internal arrays by 1000. This is intended for cases where inputs are in mL and ms — ensure you understand your acquisition units before calling this.
 
 * `manual_trim(begin_time=0, end_time=None)`
 
@@ -136,17 +139,18 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 ## Notes
 
-* It is important to run `correct_data_positioning()` and `standerdize_units()` before performing calculations or acceptability checks
+* The constructor requires explicit `scale` and `scale2` arguments to correctly initialize internal time and volume arrays. If your input arrays are already in seconds and litres, pass `scale=1` and `scale2=1` and `scale3=1` (scale3 is accepted but not applied to `flow` in the current implementation).
+* It is important to run `correct_data_positioning()` and `standerdize_units()` (if inputs are in mL/ms) before performing calculations or acceptability checks
 * Plotting methods help visualize raw and processed signals for verification
 * ECCS93 reference computations depend on gender, age, and height
-* All array attributes are assumed to be NumPy arrays internally
+* All array attributes are NumPy arrays internally
 
 ---
 
 ## Example Workflow
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False)
+sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False, scale=1, scale2=1, scale3=1)
 sp.correct_data_positioning()
 sp.standerdize_units()
 accepted, reason = sp.check_acceptability_of_spirogram()
