@@ -5,17 +5,24 @@ The `spiro_signal_process` class provides tools to analyze spirometry data, part
 ## Class Initialization
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE)
+sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_signal_is_FE, scale)
 ```
 
 ### Parameters
 
-* `time`: Time array of the spirometry manoeuvre (list or 1D array, preferably in seconds)
-* `volume`: Volume array of the manoeuvre (list or 1D array, preferably in litres)
-* `flow`: Flow array (list or 1D array, preferably in litres/sec)
-* `patientID`: Unique identifier for the patient
-* `trialID`: Identifier for the trial
-* `flag_given_signal_is_FE`: Boolean flag indicating if the signal is forced expiration only
+* `time`: Time array of the spirometry manoeuvre (list or 1D array).
+* `volume`: Volume array of the manoeuvre (list or 1D array).
+* `flow`: Flow array (list or 1D array).
+* `patientID`: Unique identifier for the patient.
+* `trialID`: Identifier for the trial.
+* `flag_given_signal_is_FE`: Boolean flag indicating if the signal is forced expiration only.
+* `scale`: Multiplicative factor applied to the provided `time` values at construction. Typical usage:
+  - If your `time` array is already in seconds, pass `scale=1`.
+  - If your `time` array is in milliseconds you can either:
+    - pass `scale=1` and call `standerdize_units()` later (this method divides time/1000 and converts volume/flow from mL to L), or
+    - pass `scale=0.001` to convert time to seconds immediately and skip `standerdize_units()` for time conversion.
+
+Note: the class multiplies the `time` array by `scale` during initialization. The library also provides `standerdize_units()` which divides time, volume and flow by 1000 to convert from ms/mL to s/L if needed. Choose `scale` and whether to call `standerdize_units()` so your internal units end up as seconds (time) and litres (volume/flow).
 
 ---
 
@@ -29,7 +36,7 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 * `standerdize_units()`
 
-  * Converts all input data units to litres and seconds
+  * Converts all input data units to litres and seconds (divides volume, flow, time by 1000)
 
 * `manual_trim(begin_time=0, end_time=None)`
 
@@ -136,7 +143,8 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 
 ## Notes
 
-* It is important to run `correct_data_positioning()` and `standerdize_units()` before performing calculations or acceptability checks
+* It is important to set `scale` correctly during construction and to run `correct_data_positioning()` and optionally `standerdize_units()` before performing calculations or acceptability checks.
+* `standerdize_units()` divides time, volume and flow by 1000 — use it when your input is in ms/mL units. If your inputs are already in s/L, do not call `standerdize_units()` (or set `scale` so that time is already in seconds).
 * Plotting methods help visualize raw and processed signals for verification
 * ECCS93 reference computations depend on gender, age, and height
 * All array attributes are assumed to be NumPy arrays internally
@@ -146,13 +154,22 @@ sp = spiro_signal_process(time, volume, flow, patientID, trialID, flag_given_sig
 ## Example Workflow
 
 ```python
-sp = spiro_signal_process(time, volume, flow, patientID='P1', trialID='T1', flag_given_signal_is_FE=False)
-sp.correct_data_positioning()
-sp.standerdize_units()
+# If time is in milliseconds and volume/flow in mL/mL/s: pass scale=1 and convert units with standerdize_units()
+sp = spiro_signal_process(time_ms, volume_ml, flow_ml_s, patientID='P1', trialID='T1', flag_given_signal_is_FE=False, scale=1)
+sp.standerdize_units()  # converts time, volume, flow from ms/mL to s/L
+
 accepted, reason = sp.check_acceptability_of_spirogram()
 if accepted:
     sp.finalize_signal(sex=1, age=35, height=175)
     print(sp.FEV1, sp.FVC, sp.PEF)
+
+# If time is already in seconds and volumes are in litres: use scale=1 and skip standerdize_units()
+sp2 = spiro_signal_process(time_s, volume_L, flow_L_s, patientID='P2', trialID='T1', flag_given_signal_is_FE=False, scale=1)
+accepted, reason = sp2.check_acceptability_of_spirogram()
+
+# Alternatively, if time is in milliseconds but you prefer conversion at construction:
+sp3 = spiro_signal_process(time_ms, volume_L, flow_L_s, patientID='P3', trialID='T1', flag_given_signal_is_FE=False, scale=0.001)
+# now time will be in seconds immediately (do not call standerdize_units() for time conversion)
 ```
 
 ---
